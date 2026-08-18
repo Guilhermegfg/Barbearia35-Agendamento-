@@ -95,7 +95,7 @@ test("holds a PIX booking for 15 minutes until the admin confirms payment", asyn
   ]);
 
   assert.match(bookingPage, /Reservar por 15 minutos/);
-  assert.match(bookingPage, /Enviar comprovante no WhatsApp/);
+  assert.match(bookingPage, /Enviar comprovante agora pelo WhatsApp/);
   assert.match(bookingPage, /Copiar código PIX/);
   assert.match(bookingPage, /pixPayload/);
   assert.match(appointmentRoute, /aguardando_pagamento/);
@@ -177,4 +177,20 @@ test("keeps admin credentials and the PIX key out of the repository", async () =
   assert.doesNotMatch(runtime, /VALUES \('pixKey', '\+/);
   assert.doesNotMatch(bookingPage, /pixPayload\(settings\.pixKey \|\|/);
   assert.match(exampleEnv, /ADMIN_PASSWORD=\nADMIN_SESSION_SECRET=\nPIX_KEY=/);
+});
+
+test("opens booking on today, starts the calendar on Monday and highlights proof delivery", async () => {
+  const [bookingPage, styles] = await Promise.all([
+    readFile(new URL("../app/components/BookingPage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(bookingPage, /setDate\(isoDate\(new Date\(\)\)\)/);
+  assert.match(bookingPage, /daysSinceMonday = \(value\.getDay\(\) \+ 6\) % 7/);
+  assert.match(bookingPage, /disabled=\{closed \|\| past\}/);
+  assert.match(bookingPage, /Envie o comprovante agora/);
+  assert.match(bookingPage, /Enviar comprovante agora pelo WhatsApp/);
+  assert.match(styles, /\.proof-warning \{ display: flex/);
+  assert.match(styles, /@media \(max-width: 380px\)/);
+  assert.match(styles, /\.time-grid \{ grid-template-columns: repeat\(2/);
 });

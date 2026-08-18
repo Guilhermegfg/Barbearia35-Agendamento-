@@ -80,12 +80,13 @@ export function BookingPage() {
   const [copied, setCopied] = useState(false);
   const [requestId, setRequestId] = useState("");
 
+  const today = useMemo(() => isoDate(new Date()), []);
   const calendarDays = useMemo(() => Array.from({ length: 21 }, (_, index) => {
-    const value = new Date();
-    value.setHours(12, 0, 0, 0);
-    value.setDate(value.getDate() + index);
+    const value = new Date(`${date || today}T12:00:00`);
+    const daysSinceMonday = (value.getDay() + 6) % 7;
+    value.setDate(value.getDate() - daysSinceMonday + index);
     return value;
-  }), []);
+  }), [date, today]);
 
   const selectedService = services.find((service) => service.id === serviceId);
   const depositPercent = Math.min(100, Math.max(1, Number(settings.depositPercent) || 30));
@@ -119,9 +120,11 @@ export function BookingPage() {
       try {
         const draft = JSON.parse(saved);
         setFirstName(draft.firstName || ""); setLastName(draft.lastName || ""); setPhone(draft.phone || "");
-        setServiceId(draft.serviceId || ""); setDate(draft.date || ""); setTime(draft.time || "");
+        setServiceId(draft.serviceId || "");
       } catch { /* rascunho inválido é ignorado */ }
     }
+    setDate(isoDate(new Date()));
+    setTime("");
     setRequestId(crypto.randomUUID());
     fetch("/api/public/bootstrap", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject())
@@ -195,8 +198,8 @@ export function BookingPage() {
           <div className="hold-alert"><span>◷</span><div><b>Reserva provisória até {holdDeadline}</b><p>Sem o envio do comprovante dentro do prazo, o horário será liberado automaticamente.</p></div></div>
           <div className="success-summary"><div><small>Código da reserva</small><b>#{booking.id.slice(0, 8).toUpperCase()}</b></div><div><small>Valor do PIX</small><b>{money(booking.paymentAmountCents)}</b></div></div>
           <div className="pix-box"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data=${encodeURIComponent(pixCode)}`} alt="QR Code PIX da reserva" width="220" height="220" /><div><h2>Pague pelo PIX</h2><p>Escaneie o QR Code ou use o PIX Copia e Cola.</p><small>Chave PIX: {settings.pixKey}</small><code>{pixCode}</code><button className="button button-ghost" type="button" onClick={() => { navigator.clipboard.writeText(pixCode); setCopied(true); }}>{copied ? "Código copiado!" : "Copiar código PIX"}</button></div></div>
-          <p className="proof-warning"><strong>Última etapa:</strong> depois de pagar, toque no botão abaixo e envie a imagem do comprovante. O barbeiro fará a confirmação.</p>
-          <div className="success-actions"><a className="button button-gold button-large" href={proofUrl} target="_blank" rel="noreferrer">Enviar comprovante no WhatsApp</a><a className="button button-ghost button-large" href="/">Voltar ao início</a></div>
+          <section className="proof-warning" aria-labelledby="proof-title"><span aria-hidden="true">!</span><div><strong id="proof-title">Envie o comprovante agora</strong><p>O pagamento sozinho não confirma o horário. Toque no botão abaixo e mande a imagem do comprovante pelo WhatsApp dentro dos 15 minutos.</p></div></section>
+          <div className="success-actions"><a className="button button-gold button-large proof-button" href={proofUrl} target="_blank" rel="noreferrer">Enviar comprovante agora pelo WhatsApp</a><a className="button button-ghost button-large" href="/">Voltar ao início</a></div>
         </div>
       </main>
     );
@@ -242,7 +245,7 @@ export function BookingPage() {
               <div className="form-step">
                 <p className="step-kicker">03 — Data e hora</p><h2>Quando fica melhor<br /><em>para você?</em></h2><p className="step-intro">Os horários são atualizados em tempo real.</p>
                 <h3 className="field-title">Escolha o dia</h3>
-                <div className="date-strip">{calendarDays.map((item) => { const value = isoDate(item); const closed = !hours[String(item.getDay())]; return <button type="button" key={value} disabled={closed} className={date === value ? "selected" : ""} onClick={() => setDate(value)}><small>{new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(item).replace(".", "")}</small><strong>{item.getDate()}</strong><span>{new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(item).replace(".", "")}</span>{closed && <i>Fechado</i>}</button>; })}</div>
+                <div className="date-strip">{calendarDays.map((item) => { const value = isoDate(item); const closed = !hours[String(item.getDay())]; const past = value < today; return <button type="button" key={value} disabled={closed || past} className={date === value ? "selected" : ""} onClick={() => setDate(value)}><small>{new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(item).replace(".", "")}</small><strong>{item.getDate()}</strong><span>{new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(item).replace(".", "")}</span>{(closed || value === today) && <i>{closed ? "Fechado" : "Hoje"}</i>}</button>; })}</div>
                 <h3 className="field-title">Horários disponíveis {date && <small>• {formatDate(date)}</small>}</h3>
                 {availabilityLoading ? <div className="slots-loading">Consultando a agenda…</div> : slots.length ? <div className="time-grid">{slots.map((slot) => <button type="button" key={slot.time} disabled={!slot.available} className={time === slot.time ? "selected" : ""} onClick={() => setTime(slot.time)} aria-label={`${slot.time} — ${slot.available ? "disponível" : "indisponível"}`}>{slot.time}<small>{slot.available ? "Disponível" : "Indisponível"}</small></button>)}</div> : <div className="empty-slots"><span>◷</span><p>{date ? "Este dia não tem horários disponíveis. Escolha outra data." : "Escolha um dia para ver os horários."}</p></div>}
               </div>
