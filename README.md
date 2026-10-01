@@ -1,100 +1,74 @@
-# vinext-starter
+# 💈 Barbearia 35 — Sistema de Agendamento
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Sistema web desenvolvido para uma barbearia real, com foco em **agendamento online, gestão de clientes, fidelidade e operação administrativa**.
 
-## Prerequisites
+O projeto foi criado para reduzir o trabalho manual do barbeiro e oferecer ao cliente uma experiência simples para consultar horários, escolher serviços e acompanhar seus agendamentos.
 
-- Node.js `>=22.13.0`
+## 🚀 Principais recursos
 
-## Quick Start
+- Agendamento online com horários disponíveis em tempo real
+- Login de clientes
+- Cadastro de nome, sobrenome e data de nascimento
+- Seleção de múltiplos serviços
+- Área de próximos agendamentos
+- Sistema de fidelidade por atendimentos
+- Cortesia automática ao completar o ciclo de pontos
+- Painel administrativo
+- Cadastro e edição de clientes
+- Bloqueio de horários e períodos
+- Controle de horários de funcionamento
+- Registro de atendimentos
+- Controle de formas de pagamento
+- Dashboard financeiro
+- Gestão de pontos de fidelidade
+- Experiência otimizada para celular
+- PWA para clientes e administração
+
+## 🧠 Regras de negócio
+
+O sistema contempla regras específicas da operação da barbearia, como:
+
+- exibição de horários futuros em intervalos curtos;
+- bloqueios recorrentes ou pontuais;
+- confirmação de valores após o atendimento;
+- cortesia aplicada ao serviço elegível;
+- controle de no-show;
+- apenas um ponto por atendimento, independentemente da quantidade de serviços;
+- fluxo de pagamento e confirmação conforme a forma escolhida.
+
+## 🛠️ Stack
+
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=000)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Drizzle](https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=for-the-badge&logo=drizzle&logoColor=000)
+
+## ▶️ Executando localmente
 
 ```bash
 npm install
 npm run dev
+```
+
+Para validar a build:
+
+```bash
 npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+## 🎯 Objetivo do projeto
 
-## Included Shape
+Este projeto vai além de uma landing page: ele foi pensado como uma ferramenta operacional para uma barbearia, centralizando atendimento, agenda, relacionamento com clientes e informações financeiras em uma única experiência.
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+## 👨‍💻 Desenvolvimento
 
-## Workspace Auth Headers
+Projeto desenvolvido por **Guilherme Fernandes / GFGTech**.
 
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
+- GitHub: https://github.com/Guilhermegfg
+- Instagram: https://www.instagram.com/gfgtech14/
+- Site: https://gfgtech.com.br
 
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
+---
 
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
-```
-
-## Optional Dispatch-Owned ChatGPT Sign-In
-
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
-
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
-
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+> Algumas integrações e regras podem variar conforme o ambiente de produção e a configuração do estabelecimento.
